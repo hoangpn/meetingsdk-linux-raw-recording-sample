@@ -54,6 +54,7 @@
 #include "ZoomSDKVirtualAudioMicEvent.h"
 
 #include <mutex>
+#include "KafkaProducer.h"
 
 
 USING_ZOOM_SDK_NAMESPACE
@@ -85,9 +86,10 @@ IZoomSDKRenderer* videoHelper;
 IMeetingRecordingController* m_pRecordController;
 IMeetingParticipantsController* m_pParticipantsController;
 
+KafkaProducer kafkaProducer("broker_name", "topic_name");
 
 //references for GetAudioRawData
-ZoomSDKAudioRawData* audio_source = new ZoomSDKAudioRawData();
+ZoomSDKAudioRawData* audio_source = new ZoomSDKAudioRawData(&kafkaProducer);
 IZoomSDKAudioRawDataHelper* audioHelper;
 
 //this is used to get a userID, there is no specific proper logic here. It just gets the first userID.

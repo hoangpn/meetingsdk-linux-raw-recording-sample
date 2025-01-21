@@ -29,7 +29,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends --no-install-su
     pkg-config \
     libegl-mesa0 \
     libsdl2-dev \
-    g++-multilib 
+    g++-multilib \
+    git \
+    libssl-dev \
+    nlohmann-json3-dev \
+    librdkafka-dev
 
 # Install CURL related libs
 RUN apt-get install -y libcurl4-openssl-dev
@@ -49,8 +53,7 @@ WORKDIR /app
 COPY demo/ /app/demo/
 
 # Execute additional commands
-RUN cd /app/demo && rm -rf bin && rm -rf build && cmake -B build && cd build && make
-
+RUN cd /app/demo && rm -rf bin && rm -rf build && cmake -B build -DRDKAFKA_ROOT_DIR=/usr && cd build && make
 # Set the working directory to the source folder
 WORKDIR /app/demo
 

@@ -17,6 +17,7 @@ find_package(nlohmann_json REQUIRED)
 # Find GLib using pkg-config
 pkg_check_modules(GLIB REQUIRED glib-2.0)
 pkg_check_modules(GIO REQUIRED gio-2.0)
+pkg_check_modules(RDKAFKA REQUIRED rdkafka)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 include_directories(${CMAKE_SOURCE_DIR}/include/h)
@@ -71,6 +72,8 @@ add_executable(meetingSDKDemo
               ${CMAKE_SOURCE_DIR}/ZoomSDKVideoSource.cpp
               ${CMAKE_SOURCE_DIR}/ZoomSDKVirtualAudioMicEvent.h
               ${CMAKE_SOURCE_DIR}/ZoomSDKVirtualAudioMicEvent.cpp
+              ${CMAKE_SOURCE_DIR}/KafkaProducer.h
+              ${CMAKE_SOURCE_DIR}/KafkaProducer.cpp
               )
 
 # Link GLib libraries
@@ -81,7 +84,7 @@ target_link_libraries(meetingSDKDemo meetingsdk)
 target_link_libraries(meetingSDKDemo glib-2.0)
 target_link_libraries(meetingSDKDemo curl)
 target_link_libraries(meetingSDKDemo pthread)
-target_link_libraries(meetingSDKDemo jwt-cpp OpenSSL::SSL OpenSSL::Crypto nlohmann_json::nlohmann_json)
+target_link_libraries(meetingSDKDemo jwt-cpp OpenSSL::SSL OpenSSL::Crypto nlohmann_json::nlohmann_json rdkafka++)
 
 
 # Create a symbolic link
