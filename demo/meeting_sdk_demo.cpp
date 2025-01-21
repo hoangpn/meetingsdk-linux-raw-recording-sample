@@ -13,7 +13,8 @@
 #include <iostream>
 #include <map>
 #include <algorithm>
-
+#include <jwt-cpp/jwt.h>
+#include <chrono>
 #include "zoom_sdk.h"
 #include "auth_service_interface.h"
 #include "meeting_service_interface.h"
@@ -69,7 +70,7 @@ GMainLoop* loop;
 
 
 //These are needed to readsettingsfromTEXT named config.txt
-std::string meeting_number, token, meeting_password, recording_token;
+std::string meeting_number, token, meeting_password, recording_token, client_id, client_secret;
 
 
 //Services which are needed to initialize, authenticate and configure settings for the SDK
@@ -104,6 +105,26 @@ bool GetAudioRawData = true;
 bool SendVideoRawData = false;
 bool SendAudioRawData = false;
 
+// generate JWT token
+std::string generateJwt(const std::string& meetingNumber, int role, int expirationSeconds, const std::string& appKey, const std::string& secretKey) {
+    // Calculate issued at and expiration times
+    auto now = std::chrono::system_clock::now();
+    auto iat = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch()).count();
+    auto exp = iat + expirationSeconds;
+    // Create the JWT
+    auto token = jwt::create()
+        .set_type("JWT")
+        .set_payload_claim("appKey", jwt::claim(appKey))
+        .set_payload_claim("sdkKey", jwt::claim(appKey))
+        .set_payload_claim("mn", jwt::claim(meetingNumber))
+        .set_payload_claim("role", picojson::value(int64_t{role}))
+        .set_payload_claim("iat", picojson::value(int64_t{iat}))
+        .set_payload_claim("exp", picojson::value(int64_t{exp}))
+        .set_payload_claim("tokenExp", picojson::value(int64_t{exp}))
+        .sign(jwt::algorithm::hs256{secretKey});
+
+    return token;
+}
 
 //this is a helper method to get the first User ID, it is just an arbitary UserID
 uint32_t getUserID() {
@@ -370,10 +391,25 @@ void ReadTEXTSettings()
 		meeting_number=config["meeting_number"];
 		std::cout << "Meeting Number: " << config["meeting_number"] << std::endl;
 	}
-	if (config.find("token") != config.end()) {
-		 token=config["token"];
-		 	std::cout << "Token: " << token<< std::endl;
+	if (config.find("client_id") != config.end()) {
+
+		client_id=config["client_id"];
+		std::cout << "Client ID: " << config["client_id"] << std::endl;
 	}
+	if (config.find("client_secret") != config.end()) {
+
+		client_secret=config["client_secret"];
+		std::cout << "Client Secret: " << config["client_secret"] << std::endl;
+	}
+    std::string jwtToken = generateJwt(meeting_number, 0, 21600, client_id, client_secret);
+    std::cout << "Generated JWT: " << jwtToken << std::endl;
+    if (config.find("token") != config.end()) {
+    		 token=config["token"];
+    		 std::cout << "Token: " << token<< std::endl;
+    }
+    if (token.empty()) {
+        token = jwtToken;
+    }
 	if (config.find("meeting_password") != config.end()) {
 		
 		meeting_password=config["meeting_password"];
@@ -710,16 +746,16 @@ void AuthMeetingSDK()
 		param.jwt_token = token.c_str();
 		std::cerr << "AuthSDK:token extracted from config file " <<param.jwt_token  << std::endl;
 	}
-	m_pAuthService->SDKAuth(param);
+//	m_pAuthService->SDKAuth(param);
 	////attempt to authenticate
-	//ZOOM_SDK_NAMESPACE::SDKError sdkErrorResult = m_pAuthService->SDKAuth(param);
+	ZOOM_SDK_NAMESPACE::SDKError sdkErrorResult = m_pAuthService->SDKAuth(param);
 
-	//if (ZOOM_SDK_NAMESPACE::SDKERR_SUCCESS != sdkErrorResult){
-	//	std::cerr << "AuthSDK:error " << std::endl;
-	//}
-	//else{
-	//	std::cerr << "AuthSDK:send success, awaiting callback " << std::endl;
-	//}
+	if (ZOOM_SDK_NAMESPACE::SDKERR_SUCCESS != sdkErrorResult){
+		std::cerr << "AuthSDK:error "<< sdkErrorResult << std::endl;
+	}
+	else{
+		std::cerr << "AuthSDK:send success, awaiting callback " << std::endl;
+	}
 }
 
 void InitMeetingSDK()

@@ -12,7 +12,8 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
 find_package(PkgConfig REQUIRED)
 find_package(ZLIB REQUIRED)
-
+find_package(OpenSSL REQUIRED)
+find_package(nlohmann_json REQUIRED)
 # Find GLib using pkg-config
 pkg_check_modules(GLIB REQUIRED glib-2.0)
 pkg_check_modules(GIO REQUIRED gio-2.0)
@@ -26,6 +27,16 @@ include_directories(${GLIB_INCLUDE_DIRS} ${GIO_INCLUDE_DIRS})
 link_directories(${GLIB_LIBRARY_DIRS} ${GIO_LIBRARY_DIRS})
 add_definitions(${GLIB_CFLAGS_OTHER} ${GIO_CFLAGS_OTHER})
 
+include(FetchContent)
+
+# Fetch jwt-cpp
+FetchContent_Declare(
+  jwt-cpp
+  GIT_REPOSITORY https://github.com/Thalhammer/jwt-cpp.git
+  GIT_TAG v0.5.1
+)
+
+FetchContent_MakeAvailable(jwt-cpp)
 
 include_directories(/usr/include/glib-2.0/)
 include_directories(/usr/include/glib-2.0/glib)
@@ -70,6 +81,7 @@ target_link_libraries(meetingSDKDemo meetingsdk)
 target_link_libraries(meetingSDKDemo glib-2.0)
 target_link_libraries(meetingSDKDemo curl)
 target_link_libraries(meetingSDKDemo pthread)
+target_link_libraries(meetingSDKDemo jwt-cpp OpenSSL::SSL OpenSSL::Crypto nlohmann_json::nlohmann_json)
 
 
 # Create a symbolic link
