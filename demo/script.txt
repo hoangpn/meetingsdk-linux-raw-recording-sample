@@ -1,0 +1,14 @@
+# if using colima
+colima start --network-address
+export TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE=/var/run/docker.sock
+export TESTCONTAINERS_HOST_OVERRIDE=$(colima ls -j | jq -r '.address')
+export DOCKER_HOST="unix://${HOME}/.colima/default/docker.sock"
+
+# build image
+docker build -f Dockerfile-Ubuntu/Dockerfile --platform=linux/amd64 -t zoom-demo:latest .
+
+# run image
+docker rm -f zoombot; docker run --name zoombot -v ./out:/mnt/out -v ./demo/config.txt:/app/demo/bin/config.txt -v ./in:/mnt/in zoom-demo:latest
+
+# convert pcm to mp3
+ffmpeg -f s16le -ar 32k -ac 1 -i audio.pcm audio.mp3
